@@ -5,10 +5,9 @@ Publishers push serialized messages over a ZeroMQ PUB socket, subscribers connec
 
 ## Features
 
-- **ZeroMQ transport (PUB/SUB)** over TCP endpoints
-- **Message abstraction** with `topic` + `content` and simple `topic:content` string serialization
-- **Thread-safe publisher send** protected by a mutex
-- **Asynchronous subscriber dispatch:** non-blocking receive loop posts callbacks into a Boost.Asio thread pool
+- ZeroMQ transport (PUB/SUB) over TCP endpoints
+- Thread-safe publisher send protected by a mutex
+- Asynchronous subscriber dispatch using Boost.Asio thread pool
 
 ## Overview
 
@@ -22,8 +21,8 @@ Publishers push serialized messages over a ZeroMQ PUB socket, subscribers connec
 You’ll need:
 
 - A C++17 (or newer) compiler (`g++`, `clang++`)
-- **ZeroMQ** (`libzmq`) and **cppzmq** headers
-- **Boost** (for Asio)
+- ZeroMQ (`libzmq`) and cppzmq
+- Boost
 
 Using the Makefile:
 
