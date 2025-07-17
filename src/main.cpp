@@ -1,9 +1,9 @@
 #include <iostream>
 #include <thread>
 #include <chrono>
-#include "message.h"
-#include "publisher.h"
-#include "subscriber.h"
+#include "pubsub/message.h"
+#include "pubsub/publisher.h"
+#include "pubsub/subscriber.h"
 
 using namespace std;
 
