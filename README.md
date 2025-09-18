@@ -1,4 +1,4 @@
-# Low-Latency Pub/Sub Messaging Bus
+# Low-Latency Messaging System
 
 A production-quality C++ messaging bus optimized for low p99 latency using ZeroMQ and Boost.Asio. Implements a messaging system with brokerless architecture.
 
