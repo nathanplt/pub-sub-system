@@ -32,7 +32,6 @@ void Metrics::update_queue_depth(size_t depth) {
 Metrics::Stats Metrics::get_stats() {
     Stats stats;
     
-    // Calculate message rate
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_rate_calc_);
     uint64_t current_count = messages_processed_.load(std::memory_order_relaxed);
@@ -44,7 +43,6 @@ Metrics::Stats Metrics::get_stats() {
         last_rate_calc_ = now;
     }
     
-    // Calculate percentiles
     {
         std::lock_guard<std::mutex> lock(samples_mutex_);
         if (!latency_samples_.empty()) {
@@ -80,9 +78,6 @@ void Metrics::cleanup_old_samples() {
     auto window_end = window_start_ + window_size_;
     
     if (now > window_end) {
-        // Keep only samples from the current window
-        // For simplicity, we'll keep the most recent samples
-        // In a production system, you'd want more sophisticated windowing
         if (latency_samples_.size() > 1000) {
             latency_samples_.erase(latency_samples_.begin(), 
                                  latency_samples_.end() - 1000);

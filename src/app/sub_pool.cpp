@@ -9,7 +9,6 @@
 
 using namespace messenger;
 
-// Global flag for graceful shutdown
 std::atomic<bool> g_running{true};
 
 void signal_handler(int signal) {
@@ -19,31 +18,26 @@ void signal_handler(int signal) {
 }
 
 void message_handler(const Message& message) {
-    // Simulate some CPU work (0.5-1ms)
+    // simulate some CPU work (0.5-1ms)
     auto start = std::chrono::steady_clock::now();
     
-    // Parse timestamp from payload
     if (message.payload.size() >= 8) {
         uint64_t timestamp_ns;
         std::memcpy(&timestamp_ns, message.payload.data(), sizeof(timestamp_ns));
         
-        // Extract data part
         std::string data;
         if (message.payload.size() > 8) {
             data = std::string(message.payload.data() + 8, message.payload.size() - 8);
         }
         
-        // Simulate CPU work
         volatile int sum = 0;
         for (int i = 0; i < 10000; ++i) {
             sum += i * i;
         }
         
-        // Calculate processing time
         auto end = std::chrono::steady_clock::now();
         auto processing_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         
-        // Print every 1000th message to avoid flooding output
         static std::atomic<int> message_count{0};
         int count = message_count.fetch_add(1) + 1;
         
@@ -67,7 +61,6 @@ void metrics_thread(SubscriberBus& bus) {
 }
 
 int main(int argc, char* argv[]) {
-    // Parse command line arguments
     std::string sub_addr = "tcp://127.0.0.1:5556";
     int num_workers = 4;
     std::vector<std::string> topics = {"topic0", "topic1", "topic2", "topic3"};
@@ -81,7 +74,6 @@ int main(int argc, char* argv[]) {
         } else if (arg == "--workers" && i + 1 < argc) {
             num_workers = std::atoi(argv[i + 1]);
         } else if (arg == "--topics" && i + 1 < argc) {
-            // Parse comma-separated topics
             std::string topics_str = argv[i + 1];
             topics.clear();
             size_t pos = 0;
@@ -107,12 +99,10 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::endl << std::endl;
     
-    // Set up signal handling
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
     
     try {
-        // Configure and start subscriber
         BusConfig config;
         config.sub_connect_addr = sub_addr;
         config.worker_threads = num_workers;
@@ -125,23 +115,18 @@ int main(int argc, char* argv[]) {
         std::cout << "Subscriber started. Waiting for messages..." << std::endl;
         std::cout << "Press Ctrl+C to stop." << std::endl << std::endl;
         
-        // Start metrics thread
         std::thread metrics_worker(metrics_thread, std::ref(bus));
         
-        // Main loop
         while (g_running.load()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
         
         std::cout << std::endl << "Shutting down..." << std::endl;
         
-        // Stop metrics thread
         metrics_worker.join();
         
-        // Stop subscriber
         bus.stop();
         
-        // Print final metrics
         auto final_stats = bus.get_metrics();
         std::cout << "FINAL METRICS: " << metrics_utils::format_stats(final_stats) << std::endl;
         

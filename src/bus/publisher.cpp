@@ -5,7 +5,6 @@
 
 namespace messenger {
 
-// Thread-local storage definitions
 thread_local std::unique_ptr<zmq::socket_t> PublisherBus::thread_local_push_ = nullptr;
 thread_local bool PublisherBus::thread_local_initialized_ = false;
 
@@ -24,23 +23,19 @@ void PublisherBus::start() {
     }
     
     try {
-        // Create and configure sockets
         pull_socket_ = std::make_unique<zmq::socket_t>(context_, zmq::socket_type::pull);
         pub_socket_ = std::make_unique<zmq::socket_t>(context_, zmq::socket_type::pub);
         
-        // Set socket options
         pull_socket_->set(zmq::sockopt::rcvhwm, config_.hwm);
         pub_socket_->set(zmq::sockopt::sndhwm, config_.hwm);
         
-        // Bind sockets
         pull_socket_->bind(config_.inproc_ingress);
         pub_socket_->bind(config_.pub_bind_addr);
         
-        // Start I/O thread
         running_.store(true, std::memory_order_relaxed);
         io_thread_ = std::thread(&PublisherBus::io_thread_loop, this);
         
-        // Warmup period to mitigate "slow joiner" problem
+        // warmup period to mitigate "slow joiner" problem
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         
     } catch (const std::exception& e) {
@@ -60,7 +55,6 @@ void PublisherBus::stop() {
         io_thread_.join();
     }
     
-    // Clean up sockets
     pull_socket_.reset();
     pub_socket_.reset();
 }
@@ -69,12 +63,10 @@ void PublisherBus::produce(const Message& message) {
     auto& push_socket = get_thread_local_push_socket();
     
     try {
-        // Send topic frame
         zmq::message_t topic_msg(message.topic.size());
         std::memcpy(topic_msg.data(), message.topic.data(), message.topic.size());
         push_socket.send(topic_msg, zmq::send_flags::sndmore);
         
-        // Send payload frame
         zmq::message_t payload_msg(message.payload.size());
         std::memcpy(payload_msg.data(), message.payload.data(), message.payload.size());
         push_socket.send(payload_msg, zmq::send_flags::none);
@@ -87,20 +79,15 @@ void PublisherBus::produce(const Message& message) {
 void PublisherBus::io_thread_loop() {
     try {
         while (running_.load(std::memory_order_relaxed)) {
-            // Receive from PULL socket (inproc fan-in)
             std::vector<zmq::message_t> messages;
             auto result = zmq::recv_multipart(*pull_socket_, std::back_inserter(messages), 
                                             zmq::recv_flags::dontwait);
             
             if (result.has_value() && messages.size() >= 2) {
-                // Forward to PUB socket
-                // Send topic frame
                 pub_socket_->send(messages[0], zmq::send_flags::sndmore);
-                
-                // Send payload frame
                 pub_socket_->send(messages[1], zmq::send_flags::none);
             } else {
-                // No message available, yield briefly
+                // no message available, wait briefly
                 std::this_thread::sleep_for(std::chrono::microseconds(10));
             }
         }

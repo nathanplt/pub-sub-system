@@ -25,22 +25,16 @@ public:
 
     explicit Metrics(std::chrono::milliseconds window_size = std::chrono::milliseconds(1000));
     
-    // Record a latency measurement (in nanoseconds)
     void record_latency(std::chrono::nanoseconds latency);
     
-    // Record message processing
     void record_message_processed();
     
-    // Record message drop
     void record_message_dropped();
     
-    // Update queue depth
     void update_queue_depth(size_t depth);
     
-    // Get current statistics
     Stats get_stats();
     
-    // Reset all counters
     void reset();
 
 private:
@@ -50,16 +44,13 @@ private:
     std::chrono::milliseconds window_size_;
     std::chrono::steady_clock::time_point window_start_;
     
-    // Thread-safe storage for latency samples
     std::vector<double> latency_samples_;
     std::mutex samples_mutex_;
     
-    // Atomic counters
     std::atomic<uint64_t> messages_processed_{0};
     std::atomic<uint64_t> messages_dropped_{0};
     std::atomic<size_t> queue_depth_{0};
     
-    // Rate calculation
     std::chrono::steady_clock::time_point last_rate_calc_;
     uint64_t last_message_count_{0};
 };

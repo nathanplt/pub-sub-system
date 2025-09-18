@@ -12,32 +12,27 @@ using namespace messenger;
 void producer_thread(PublisherBus& bus, int thread_id, int message_count, 
                     const std::string& topic_prefix) {
     for (int i = 0; i < message_count; ++i) {
-        // Create message with timestamp
         auto now = std::chrono::steady_clock::now();
         auto timestamp_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
             now.time_since_epoch()).count();
         
-        // Create payload with timestamp (8 bytes) + data
+        // timestamp (8 bytes) + data
         std::string payload;
-        payload.resize(8 + 64); // timestamp + data
+        payload.resize(8 + 64);
         
-        // Write timestamp as first 8 bytes
         std::memcpy(payload.data(), &timestamp_ns, sizeof(timestamp_ns));
         
-        // Write some data
         std::string data = "Thread " + std::to_string(thread_id) + 
                           " Message " + std::to_string(i);
         std::memcpy(payload.data() + 8, data.c_str(), 
                    std::min(data.size(), size_t(64)));
         
-        // Create message
         std::string topic = topic_prefix + std::to_string(thread_id % 4); // 4 topics
         Message message(topic, payload);
         
-        // Send message
         bus.produce(message);
         
-        // Small delay to avoid overwhelming the system
+        // small delay to avoid overwhelming the system
         if (i % 100 == 0) {
             std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
@@ -45,7 +40,6 @@ void producer_thread(PublisherBus& bus, int thread_id, int message_count,
 }
 
 int main(int argc, char* argv[]) {
-    // Parse command line arguments
     std::string pub_addr = "tcp://*:5556";
     int num_producers = 4;
     int messages_per_producer = 10000;
@@ -75,18 +69,16 @@ int main(int argc, char* argv[]) {
     std::cout << std::endl;
     
     try {
-        // Configure and start publisher
         BusConfig config;
         config.pub_bind_addr = pub_addr;
-        config.worker_threads = 1; // Not used by publisher
+        config.worker_threads = 1; 
         config.hwm = 10000;
         
         PublisherBus bus(config);
         bus.start();
         
         std::cout << "Publisher started. Starting producer threads..." << std::endl;
-        
-        // Start producer threads
+ 
         std::vector<std::thread> producers;
         auto start_time = std::chrono::steady_clock::now();
         
@@ -95,7 +87,6 @@ int main(int argc, char* argv[]) {
                                  messages_per_producer, topic_prefix);
         }
         
-        // Wait for all producers to complete
         for (auto& producer : producers) {
             producer.join();
         }
@@ -115,7 +106,6 @@ int main(int argc, char* argv[]) {
                       << " messages/sec" << std::endl;
         }
         
-        // Keep running for a bit to ensure all messages are sent
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         
         bus.stop();

@@ -1,6 +1,6 @@
 # Low-Latency Pub/Sub Messaging Bus
 
-A production-quality C++ messaging bus optimized for low p99 latency using ZeroMQ and Boost.Asio. Implements an ephemeral (at-most-once) messaging system with brokerless architecture.
+A production-quality C++ messaging bus optimized for low p99 latency using ZeroMQ and Boost.Asio. Implements a messaging system with brokerless architecture.
 
 ## Architecture
 
@@ -48,8 +48,7 @@ I/O Thread              Worker Pool (N)
 - **Thread-safe publishing**: Thread-local sockets eliminate mutex contention
 - **Asynchronous processing**: Worker pool handles CPU work without blocking I/O
 - **Comprehensive metrics**: p50/p90/p99 latency, throughput, queue depth
-- **Configurable**: HWM, thread counts, endpoints, metrics period
-- **Production-ready**: RAII, graceful shutdown, error handling
+- **Configurable**: thread counts, endpoints, metrics period
 
 ## Dependencies
 
@@ -119,23 +118,6 @@ PublisherBus publisher(config);
 SubscriberBus subscriber(config, {"topic1", "topic2"}, message_handler);
 ```
 
-## Performance Tuning
-
-### ZeroMQ Socket Options
-- **HWM (High Water Mark)**: Controls buffer sizes (default: 1000)
-- **I/O threads**: ZeroMQ context I/O threads (default: 1)
-- **Socket types**: PUSH/PULL for fan-in, PUB/SUB for distribution
-
-### Threading
-- **Producer threads**: More threads = higher throughput (but diminishing returns)
-- **Worker threads**: Match CPU cores for optimal utilization
-- **I/O threads**: Usually 1 is sufficient for most workloads
-
-### Memory Management
-- **Preallocate buffers**: Avoid allocations in hot path
-- **Move semantics**: Use `std::move` for large objects
-- **Thread-local storage**: Reduces contention
-
 ## Metrics
 
 The system provides comprehensive metrics:
@@ -143,36 +125,3 @@ The system provides comprehensive metrics:
 ```
 METRICS: p50=45μs p90=89μs p99=156μs msgs/sec=125000 processed=50000 dropped=0 queue=0
 ```
-
-- **Latency percentiles**: p50, p90, p99 in microseconds
-- **Throughput**: Messages per second
-- **Processing stats**: Total processed, dropped messages
-- **Queue depth**: Current work queue size
-
-## Message Format
-
-Messages use ZeroMQ multipart format:
-- **Frame 1**: Topic (string)
-- **Frame 2**: Payload (bytes)
-
-Payload format for latency measurement:
-- **Bytes 0-7**: Timestamp (uint64_t nanoseconds)
-- **Bytes 8+**: User data
-
-## Error Handling
-
-- **Graceful shutdown**: Proper cleanup of threads and sockets
-- **Exception safety**: RAII ensures resources are cleaned up
-- **Error reporting**: Comprehensive error messages and logging
-- **Backpressure**: ZeroMQ HWM provides natural backpressure
-
-## Thread Safety
-
-- **PublisherBus::produce()**: Thread-safe, creates thread-local sockets
-- **SubscriberBus**: Single I/O thread + worker pool
-- **Metrics**: Thread-safe with minimal locking
-- **Configuration**: Immutable after construction
-
-## License
-
-MIT License - see LICENSE file for details.

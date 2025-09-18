@@ -22,38 +22,28 @@ public:
     explicit PublisherBus(const BusConfig& config = BusConfig{});
     ~PublisherBus();
     
-    // Start the I/O thread and warm up
     void start();
     
-    // Stop the I/O thread gracefully
     void stop();
     
-    // Thread-safe message publishing
-    // Creates thread-local PUSH socket on first call
     void produce(const Message& message);
     
-    // Check if the bus is running
     bool is_running() const { return running_.load(std::memory_order_relaxed); }
 
 private:
-    // I/O thread main loop
     void io_thread_loop();
     
-    // Create thread-local PUSH socket
     zmq::socket_t& get_thread_local_push_socket();
     
     BusConfig config_;
     zmq::context_t context_;
     
-    // I/O thread owns these sockets
     std::unique_ptr<zmq::socket_t> pull_socket_;
     std::unique_ptr<zmq::socket_t> pub_socket_;
     
-    // Threading
     std::atomic<bool> running_{false};
     std::thread io_thread_;
     
-    // Thread-local storage for PUSH sockets
     static thread_local std::unique_ptr<zmq::socket_t> thread_local_push_;
     static thread_local bool thread_local_initialized_;
 };
