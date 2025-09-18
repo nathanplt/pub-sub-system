@@ -41,7 +41,7 @@ void PublisherBus::start() {
         io_thread_ = std::thread(&PublisherBus::io_thread_loop, this);
         
         // Warmup period to mitigate "slow joiner" problem
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         
     } catch (const std::exception& e) {
         std::cerr << "Failed to start PublisherBus: " << e.what() << std::endl;

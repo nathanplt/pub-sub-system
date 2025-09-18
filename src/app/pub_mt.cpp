@@ -38,8 +38,8 @@ void producer_thread(PublisherBus& bus, int thread_id, int message_count,
         bus.produce(message);
         
         // Small delay to avoid overwhelming the system
-        if (i % 1000 == 0) {
-            std::this_thread::sleep_for(std::chrono::microseconds(1));
+        if (i % 100 == 0) {
+            std::this_thread::sleep_for(std::chrono::microseconds(10));
         }
     }
 }
@@ -105,8 +105,15 @@ int main(int argc, char* argv[]) {
             end_time - start_time);
         
         std::cout << "All messages sent in " << duration.count() << " ms" << std::endl;
-        std::cout << "Rate: " << (num_producers * messages_per_producer * 1000.0 / duration.count()) 
-                  << " messages/sec" << std::endl;
+        if (duration.count() > 0) {
+            std::cout << "Rate: " << (num_producers * messages_per_producer * 1000.0 / duration.count()) 
+                      << " messages/sec" << std::endl;
+        } else {
+            auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(
+                end_time - start_time);
+            std::cout << "Rate: " << (num_producers * messages_per_producer * 1000000.0 / duration_us.count()) 
+                      << " messages/sec" << std::endl;
+        }
         
         // Keep running for a bit to ensure all messages are sent
         std::this_thread::sleep_for(std::chrono::milliseconds(100));

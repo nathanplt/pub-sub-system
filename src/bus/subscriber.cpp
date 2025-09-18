@@ -44,6 +44,9 @@ void SubscriberBus::start() {
         start_time_ = std::chrono::steady_clock::now();
         io_thread_ = std::thread(&SubscriberBus::io_thread_loop, this);
         
+        // Give I/O thread time to connect
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        
     } catch (const std::exception& e) {
         std::cerr << "Failed to start SubscriberBus: " << e.what() << std::endl;
         throw;
