@@ -1,8 +1,0 @@
-/Users/nathan/Projects/messenger/build/CMakeFiles/pub_mt.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/sub_pool.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/edit_cache.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/rebuild_cache.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/list_install_components.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/install.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/install/local.dir
-/Users/nathan/Projects/messenger/build/CMakeFiles/install/strip.dir

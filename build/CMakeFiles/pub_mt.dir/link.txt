@@ -1,1 +1,0 @@
-/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/pub_mt.dir/src/app/pub_mt.cpp.o CMakeFiles/pub_mt.dir/src/bus/publisher.cpp.o CMakeFiles/pub_mt.dir/src/bus/subscriber.cpp.o CMakeFiles/pub_mt.dir/src/bus/metrics.cpp.o -o pub_mt  /opt/homebrew/Cellar/zeromq/4.3.5_1/lib/libzmq.dylib /opt/homebrew/lib/libboost_system.dylib -lpthread
