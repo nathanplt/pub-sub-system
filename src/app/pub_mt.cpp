@@ -31,11 +31,6 @@ void producer_thread(PublisherBus& bus, int tid, int msg_count,
         Message msg(topic, payload);
         
         bus.produce(msg);
-        
-        // small delay to avoid overwhelming the system
-        if (i % 100 == 0) {
-            std::this_thread::sleep_for(std::chrono::microseconds(10));
-        }
     }
 }
 

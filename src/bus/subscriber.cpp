@@ -90,7 +90,7 @@ void SubscriberBus::process_message(const Message& msg) {
         std::memcpy(&ts, msg.payload.data(), sizeof(ts));
         
         auto now = std::chrono::steady_clock::now();
-        auto msg_time = std::chrono::steady_clock::time_point() + std::chrono::nanoseconds(ts);
+        auto msg_time = std::chrono::steady_clock::time_point(std::chrono::nanoseconds(ts));
         auto latency = now - msg_time;
         
         metrics_.record_latency(latency);
