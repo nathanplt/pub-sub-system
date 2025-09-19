@@ -6,6 +6,8 @@
 #include <thread>
 #include <atomic>
 #include <memory>
+#include <mutex>
+#include <map>
 
 namespace messenger {
 
@@ -28,7 +30,7 @@ public:
     
     void produce(const Message& message);
     
-    bool is_running() const { return running_.load(std::memory_order_relaxed); }
+    bool is_running() const { return running_.load(); }
 
 private:
     void io_thread_loop();
@@ -44,8 +46,8 @@ private:
     std::atomic<bool> running_{false};
     std::thread io_thread_;
     
-    static thread_local std::unique_ptr<zmq::socket_t> thread_local_push_;
-    static thread_local bool thread_local_initialized_;
+    std::mutex socket_mutex_;
+    std::map<std::thread::id, std::unique_ptr<zmq::socket_t>> thread_sockets_;
 };
 
 } // namespace messenger

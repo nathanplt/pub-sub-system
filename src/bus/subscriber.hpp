@@ -31,7 +31,7 @@ public:
     
     void stop();
     
-    bool is_running() const { return running_.load(std::memory_order_relaxed); }
+    bool is_running() const { return running_.load(); }
     
     Metrics::Stats get_metrics() { return metrics_.get_stats(); }
 

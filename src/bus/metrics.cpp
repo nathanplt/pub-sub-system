@@ -14,19 +14,29 @@ Metrics::Metrics(std::chrono::milliseconds window_size)
 void Metrics::record_latency(std::chrono::nanoseconds latency) {
     std::lock_guard<std::mutex> lock(samples_mutex_);
     latency_samples_.push_back(static_cast<double>(latency.count()));
-    cleanup_old_samples();
+    
+    auto now = std::chrono::steady_clock::now();
+    auto window_end = window_start_ + window_size_;
+    
+    if (now > window_end) {
+        if (latency_samples_.size() > 1000) {
+            latency_samples_.erase(latency_samples_.begin(), 
+                                 latency_samples_.end() - 1000);
+        }
+        window_start_ = now;
+    }
 }
 
 void Metrics::record_message_processed() {
-    messages_processed_.fetch_add(1, std::memory_order_relaxed);
+    messages_processed_.fetch_add(1);
 }
 
 void Metrics::record_message_dropped() {
-    messages_dropped_.fetch_add(1, std::memory_order_relaxed);
+    messages_dropped_.fetch_add(1);
 }
 
 void Metrics::update_queue_depth(size_t depth) {
-    queue_depth_.store(depth, std::memory_order_relaxed);
+    queue_depth_.store(depth);
 }
 
 Metrics::Stats Metrics::get_stats() {
@@ -34,7 +44,7 @@ Metrics::Stats Metrics::get_stats() {
     
     auto now = std::chrono::steady_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_rate_calc_);
-    uint64_t current_count = messages_processed_.load(std::memory_order_relaxed);
+    uint64_t current_count = messages_processed_.load();
     
     if (elapsed.count() > 0) {
         double rate = (current_count - last_message_count_) * 1000.0 / elapsed.count();
@@ -56,8 +66,8 @@ Metrics::Stats Metrics::get_stats() {
     }
     
     stats.messages_processed = current_count;
-    stats.messages_dropped = messages_dropped_.load(std::memory_order_relaxed);
-    stats.queue_depth = queue_depth_.load(std::memory_order_relaxed);
+    stats.messages_dropped = messages_dropped_.load();
+    stats.queue_depth = queue_depth_.load();
     
     return stats;
 }
@@ -65,9 +75,9 @@ Metrics::Stats Metrics::get_stats() {
 void Metrics::reset() {
     std::lock_guard<std::mutex> lock(samples_mutex_);
     latency_samples_.clear();
-    messages_processed_.store(0, std::memory_order_relaxed);
-    messages_dropped_.store(0, std::memory_order_relaxed);
-    queue_depth_.store(0, std::memory_order_relaxed);
+    messages_processed_.store(0);
+    messages_dropped_.store(0);
+    queue_depth_.store(0);
     window_start_ = std::chrono::steady_clock::now();
     last_rate_calc_ = std::chrono::steady_clock::now();
     last_message_count_ = 0;
