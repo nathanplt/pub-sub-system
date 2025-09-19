@@ -1,6 +1,6 @@
 # Low-Latency Messaging System
 
-A production-quality C++ messaging bus optimized for low p99 latency using ZeroMQ and Boost.Asio. Implements a messaging system with brokerless architecture.
+A C++ messaging bus optimized for latency using ZeroMQ and Boost.Asio. Implements a messaging system with brokerless architecture.
 
 ## Architecture
 
@@ -109,5 +109,5 @@ SubscriberBus subscriber(config, {"topic1", "topic2"}, message_handler);
 The system provides comprehensive metrics:
 
 ```
-METRICS: p50=45μs p90=89μs p99=156μs msgs/sec=125000 processed=50000 dropped=0 queue=0
+METRICS: p50=100ms p90=217ms p99=244ms msgs/sec=0.00 processed=41812 dropped=0 queue=0
 ```
