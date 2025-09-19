@@ -19,12 +19,6 @@ struct Message {
     Message() = default;
     Message(std::string topic, std::string payload) 
         : topic(std::move(topic)), payload(std::move(payload)) {}
-    
-    Message(Message&&) = default;
-    Message& operator=(Message&&) = default;
-    
-    Message(const Message&) = default;
-    Message& operator=(const Message&) = default;
 };
 
 struct BusConfig {

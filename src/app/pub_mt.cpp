@@ -27,7 +27,7 @@ void producer_thread(PublisherBus& bus, int thread_id, int message_count,
         std::memcpy(payload.data() + 8, data.c_str(), 
                    std::min(data.size(), size_t(64)));
         
-        std::string topic = topic_prefix + std::to_string(thread_id % 4); // 4 topics
+        std::string topic = topic_prefix + std::to_string(thread_id % 4);
         Message message(topic, payload);
         
         bus.produce(message);
