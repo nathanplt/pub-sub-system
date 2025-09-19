@@ -4,12 +4,6 @@ A production-quality C++ messaging bus optimized for low p99 latency using ZeroM
 
 ## Architecture
 
-### Design Principles
-- **One socket per owning thread**: ZeroMQ sockets are not thread-safe
-- **No mutexes on sockets**: Each socket has a single owner thread
-- **Allocation-light hot path**: Move semantics and preallocated buffers
-- **No heavy work in I/O threads**: CPU work delegated to worker pools
-
 ### Publisher Architecture
 ```
 Producer Threads (N)     I/O Thread
@@ -41,14 +35,6 @@ I/O Thread              Worker Pool (N)
 - **I/O thread**: Owns `SUB` socket, receives messages, posts to worker pool
 - **Worker pool**: `boost::asio::thread_pool` for CPU-intensive message processing
 - **No blocking**: I/O thread only does recv/send operations
-
-## Features
-
-- **Low-latency design**: Optimized for p99 latency with minimal allocations
-- **Thread-safe publishing**: Thread-local sockets eliminate mutex contention
-- **Asynchronous processing**: Worker pool handles CPU work without blocking I/O
-- **Comprehensive metrics**: p50/p90/p99 latency, throughput, queue depth
-- **Configurable**: thread counts, endpoints, metrics period
 
 ## Dependencies
 
