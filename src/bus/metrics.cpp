@@ -19,6 +19,7 @@ void Metrics::record_latency(std::chrono::nanoseconds latency) {
     auto window_end = window_start_ + window_size_;
     
     if (now > window_end) {
+        // prevent indefinite growth of latency samples
         if (latency_samples_.size() > 1000) {
             latency_samples_.erase(latency_samples_.begin(), latency_samples_.end() - 1000);
         }
@@ -30,9 +31,6 @@ void Metrics::record_message_processed() {
     messages_processed_.fetch_add(1);
 }
 
-void Metrics::record_message_dropped() {
-    messages_dropped_.fetch_add(1);
-}
 
 
 Metrics::Stats Metrics::get_stats() {
@@ -62,7 +60,6 @@ Metrics::Stats Metrics::get_stats() {
     }
     
     stats.messages_processed = current_count;
-    stats.messages_dropped = messages_dropped_.load();
     
     return stats;
 }
@@ -71,22 +68,9 @@ void Metrics::reset() {
     std::lock_guard<std::mutex> lock(samples_mutex_);
     latency_samples_.clear();
     messages_processed_.store(0);
-    messages_dropped_.store(0);
     window_start_ = std::chrono::steady_clock::now();
     last_rate_calc_ = std::chrono::steady_clock::now();
     last_message_count_ = 0;
-}
-
-void Metrics::cleanup_old_samples() {
-    auto now = std::chrono::steady_clock::now();
-    auto window_end = window_start_ + window_size_;
-    
-    if (now > window_end) {
-        if (latency_samples_.size() > 1000) {
-            latency_samples_.erase(latency_samples_.begin(), latency_samples_.end() - 1000);
-        }
-        window_start_ = now;
-    }
 }
 
 double Metrics::calculate_percentile(const std::vector<double>& sorted_samples, double percentile) {
@@ -113,8 +97,7 @@ std::string format_stats(const Metrics::Stats& stats) {
         << " p90=" << format_duration(std::chrono::nanoseconds(static_cast<int64_t>(stats.p90)))
         << " p99=" << format_duration(std::chrono::nanoseconds(static_cast<int64_t>(stats.p99)))
         << " msgs/sec=" << stats.messages_per_second
-        << " processed=" << stats.messages_processed
-        << " dropped=" << stats.messages_dropped;
+        << " processed=" << stats.messages_processed;
     return oss.str();
 }
 

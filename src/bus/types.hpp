@@ -8,17 +8,12 @@
 
 namespace messenger {
 
-/**
- * Message structure for the pub/sub bus.
- * Uses two-frame ZeroMQ multipart format: [topic][payload]
- */
 struct Message {
     std::string topic;
     std::string payload;
     
-    Message() = default;
     Message(std::string topic, std::string payload) 
-        : topic(std::move(topic)), payload(std::move(payload)) {}
+        : topic(topic), payload(payload) {}
 };
 
 struct BusConfig {

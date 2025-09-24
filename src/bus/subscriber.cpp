@@ -9,7 +9,7 @@ namespace messenger {
 SubscriberBus::SubscriberBus(const BusConfig& config, const std::vector<std::string>& topics, MessageHandler handler)
     : config_(config)
     , topics_(topics)
-    , handler_(std::move(handler))
+    , handler_(handler)
     , context_(config.io_threads)
     , worker_pool_(config.worker_threads)
     , metrics_(config.metrics_period) {
@@ -81,9 +81,9 @@ void SubscriberBus::io_thread_loop() {
 void SubscriberBus::process_message(const Message& msg) {
     metrics_.record_message_processed();
     
-    if (msg.payload.size() >= 8) {
-        uint64_t ts;
-        std::memcpy(&ts, msg.payload.data(), sizeof(ts));
+    size_t pipe_pos = msg.payload.find('|');
+    if (pipe_pos != std::string::npos) {
+        uint64_t ts = std::stoull(msg.payload.substr(0, pipe_pos));
         
         auto now = std::chrono::steady_clock::now();
         auto msg_time = std::chrono::steady_clock::time_point(std::chrono::nanoseconds(ts));

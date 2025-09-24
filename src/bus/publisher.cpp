@@ -5,7 +5,6 @@
 
 namespace messenger {
 
-
 PublisherBus::PublisherBus(const BusConfig& config)
     : config_(config)
     , context_(config.io_threads) {
@@ -65,8 +64,7 @@ void PublisherBus::produce(const Message& msg) {
 void PublisherBus::io_thread_loop() {
     while (running_.load()) {
         std::vector<zmq::message_t> msgs;
-        auto result = zmq::recv_multipart(*pull_socket_, std::back_inserter(msgs), 
-                                        zmq::recv_flags::dontwait);
+        auto result = zmq::recv_multipart(*pull_socket_, std::back_inserter(msgs), zmq::recv_flags::dontwait);
         
         if (result.has_value() && msgs.size() >= 2) {
             pub_socket_->send(msgs[0], zmq::send_flags::sndmore);

@@ -12,19 +12,10 @@ using namespace messenger;
 void producer_thread(PublisherBus& bus, int tid, int msg_count, const std::string& topic_prefix) {
     for (int i = 0; i < msg_count; ++i) {
         auto now = std::chrono::steady_clock::now();
-        auto ts = std::chrono::duration_cast<std::chrono::nanoseconds>(
-            now.time_since_epoch()).count();
+        auto ts = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
         
-        // timestamp (8 bytes) + data
-        std::string payload;
-        payload.resize(8 + 64);
-        
-        std::memcpy(payload.data(), &ts, sizeof(ts));
-        
-        std::string data = "Thread " + std::to_string(tid) + 
-                          " Message " + std::to_string(i);
-        std::memcpy(payload.data() + 8, data.c_str(), 
-                   std::min(data.size(), size_t(64)));
+        std::string data = "Thread " + std::to_string(tid) + " Message " + std::to_string(i);
+        std::string payload = std::to_string(ts) + "|" + data;
         
         std::string topic = topic_prefix + std::to_string(tid % 4);
         Message msg(topic, payload);
@@ -87,16 +78,14 @@ int main(int argc, char* argv[]) {
     }
     
     auto end_time = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(
-        end_time - start_time);
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
     
     std::cout << "All messages sent in " << duration.count() << " ms" << std::endl;
     if (duration.count() > 0) {
         std::cout << "Rate: " << (num_producers * messages_per_producer * 1000.0 / duration.count()) 
                   << " messages/sec" << std::endl;
     } else {
-        auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(
-            end_time - start_time);
+        auto duration_us = std::chrono::duration_cast<std::chrono::microseconds>(end_time - start_time);
         std::cout << "Rate: " << (num_producers * messages_per_producer * 1000000.0 / duration_us.count()) 
                   << " messages/sec" << std::endl;
     }
