@@ -22,9 +22,7 @@ namespace messenger {
  */
 class SubscriberBus {
 public:
-    SubscriberBus(const BusConfig& config, 
-                  const std::vector<std::string>& topics,
-                  MessageHandler handler);
+    SubscriberBus(const BusConfig& config, const std::vector<std::string>& topics, MessageHandler handler);
     ~SubscriberBus();
     
     void start();

@@ -6,9 +6,7 @@
 
 namespace messenger {
 
-SubscriberBus::SubscriberBus(const BusConfig& config, 
-                           const std::vector<std::string>& topics,
-                           MessageHandler handler)
+SubscriberBus::SubscriberBus(const BusConfig& config, const std::vector<std::string>& topics, MessageHandler handler)
     : config_(config)
     , topics_(topics)
     , handler_(std::move(handler))
@@ -63,8 +61,7 @@ void SubscriberBus::io_thread_loop() {
     while (running_.load()) {
         std::vector<zmq::message_t> msgs;
         msgs.clear();
-        auto result = zmq::recv_multipart(*sub_socket_, std::back_inserter(msgs), 
-                                        zmq::recv_flags::dontwait);
+        auto result = zmq::recv_multipart(*sub_socket_, std::back_inserter(msgs), zmq::recv_flags::dontwait);
         
         if (result.has_value() && msgs.size() >= 2) {
             std::string topic(static_cast<char*>(msgs[0].data()), msgs[0].size());

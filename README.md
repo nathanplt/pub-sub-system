@@ -109,5 +109,5 @@ SubscriberBus subscriber(config, {"topic1", "topic2"}, message_handler);
 The system provides comprehensive metrics:
 
 ```
-METRICS: p50=100ms p90=217ms p99=244ms msgs/sec=0.00 processed=41812 dropped=0 queue=0
+METRICS: p50=100ms p90=217ms p99=244ms msgs/sec=0.00 processed=41812 dropped=0
 ```
