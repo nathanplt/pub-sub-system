@@ -60,7 +60,6 @@ void SubscriberBus::stop() {
 void SubscriberBus::io_thread_loop() {
     while (running_.load()) {
         std::vector<zmq::message_t> msgs;
-        msgs.clear();
         auto result = zmq::recv_multipart(*sub_socket_, std::back_inserter(msgs), zmq::recv_flags::dontwait);
         
         if (result.has_value() && msgs.size() >= 2) {

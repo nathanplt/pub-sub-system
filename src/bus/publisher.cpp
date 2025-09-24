@@ -65,7 +65,6 @@ void PublisherBus::produce(const Message& msg) {
 void PublisherBus::io_thread_loop() {
     while (running_.load()) {
         std::vector<zmq::message_t> msgs;
-        msgs.clear();
         auto result = zmq::recv_multipart(*pull_socket_, std::back_inserter(msgs), 
                                         zmq::recv_flags::dontwait);
         
