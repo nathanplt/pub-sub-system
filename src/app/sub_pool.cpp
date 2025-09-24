@@ -9,37 +9,24 @@
 
 using namespace messenger;
 
-std::atomic<bool> g_running{true};
+std::atomic<bool> subscribers_running{true};
 
 void signal_handler(int signal) {
     if (signal == SIGINT || signal == SIGTERM) {
-        g_running.store(false);
+        subscribers_running.store(false);
     }
 }
 
 void message_handler(const Message& msg) {
     // simulate some CPU work (0.5-1ms)
-    auto start_time = std::chrono::steady_clock::now();
-    
-    if (msg.payload.size() >= 8) {
-        uint64_t ts;
-        std::memcpy(&ts, msg.payload.data(), sizeof(ts));
-        
-        std::string msg_data;
-        if (msg.payload.size() > 8) {
-            msg_data = std::string(msg.payload.data() + 8, msg.payload.size() - 8);
-        }
-        
-        // do some work
-        int total = 0;
-        for (int i = 0; i < 10000; ++i) {
-            total += i * i;
-        }
+    int total = 0;
+    for (int i = 0; i < 10000; ++i) {
+        total += i * i;
     }
 }
 
 void metrics_thread(SubscriberBus& bus) {
-    while (g_running.load()) {
+    while (subscribers_running.load()) {
         std::this_thread::sleep_for(std::chrono::seconds(1));
         
         auto stats = bus.get_metrics();
@@ -106,7 +93,7 @@ int main(int argc, char* argv[]) {
     
     std::thread metrics_worker(metrics_thread, std::ref(bus));
     
-    while (g_running.load()) {
+    while (subscribers_running.load()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
@@ -119,7 +106,7 @@ int main(int argc, char* argv[]) {
     auto final_stats = bus.get_metrics();
     std::cout << "FINAL METRICS: " << metrics_utils::format_stats(final_stats) << std::endl;
     
-    std::cout << "Subscriber stopped." << std::endl;
+    std::cout << "Subscriber stopped" << std::endl;
     
     return 0;
 }

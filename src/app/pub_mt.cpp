@@ -9,8 +9,7 @@
 
 using namespace messenger;
 
-void producer_thread(PublisherBus& bus, int tid, int msg_count, 
-                    const std::string& topic_prefix) {
+void producer_thread(PublisherBus& bus, int tid, int msg_count, const std::string& topic_prefix) {
     for (int i = 0; i < msg_count; ++i) {
         auto now = std::chrono::steady_clock::now();
         auto ts = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -80,8 +79,7 @@ int main(int argc, char* argv[]) {
     auto start_time = std::chrono::steady_clock::now();
     
     for (int i = 0; i < num_producers; ++i) {
-        producers.emplace_back(producer_thread, std::ref(bus), i, 
-                             messages_per_producer, topic_prefix);
+        producers.emplace_back(producer_thread, std::ref(bus), i, messages_per_producer, topic_prefix);
     }
     
     for (auto& producer : producers) {
@@ -106,7 +104,7 @@ int main(int argc, char* argv[]) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
     bus.stop();
-    std::cout << "Publisher stopped." << std::endl;
+    std::cout << "Publisher stopped" << std::endl;
     
     return 0;
 }

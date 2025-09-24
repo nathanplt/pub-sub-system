@@ -20,8 +20,7 @@ void Metrics::record_latency(std::chrono::nanoseconds latency) {
     
     if (now > window_end) {
         if (latency_samples_.size() > 1000) {
-            latency_samples_.erase(latency_samples_.begin(), 
-                                 latency_samples_.end() - 1000);
+            latency_samples_.erase(latency_samples_.begin(), latency_samples_.end() - 1000);
         }
         window_start_ = now;
     }
