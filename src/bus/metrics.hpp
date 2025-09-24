@@ -20,7 +20,6 @@ public:
         uint64_t messages_processed = 0;
         uint64_t messages_dropped = 0;
         double messages_per_second = 0.0;
-        size_t queue_depth = 0;
     };
 
     explicit Metrics(std::chrono::milliseconds window_size = std::chrono::milliseconds(1000));
@@ -31,7 +30,6 @@ public:
     
     void record_message_dropped();
     
-    void update_queue_depth(size_t depth);
     
     Stats get_stats();
     
@@ -49,7 +47,6 @@ private:
     
     std::atomic<uint64_t> messages_processed_{0};
     std::atomic<uint64_t> messages_dropped_{0};
-    std::atomic<size_t> queue_depth_{0};
     
     std::chrono::steady_clock::time_point last_rate_calc_;
     uint64_t last_message_count_{0};

@@ -34,9 +34,6 @@ void Metrics::record_message_dropped() {
     messages_dropped_.fetch_add(1);
 }
 
-void Metrics::update_queue_depth(size_t depth) {
-    queue_depth_.store(depth);
-}
 
 Metrics::Stats Metrics::get_stats() {
     Stats stats;
@@ -66,7 +63,6 @@ Metrics::Stats Metrics::get_stats() {
     
     stats.messages_processed = current_count;
     stats.messages_dropped = messages_dropped_.load();
-    stats.queue_depth = queue_depth_.load();
     
     return stats;
 }
@@ -76,7 +72,6 @@ void Metrics::reset() {
     latency_samples_.clear();
     messages_processed_.store(0);
     messages_dropped_.store(0);
-    queue_depth_.store(0);
     window_start_ = std::chrono::steady_clock::now();
     last_rate_calc_ = std::chrono::steady_clock::now();
     last_message_count_ = 0;
@@ -120,8 +115,7 @@ std::string format_stats(const Metrics::Stats& stats) {
         << " p99=" << format_duration(std::chrono::nanoseconds(static_cast<int64_t>(stats.p99)))
         << " msgs/sec=" << stats.messages_per_second
         << " processed=" << stats.messages_processed
-        << " dropped=" << stats.messages_dropped
-        << " queue=" << stats.queue_depth;
+        << " dropped=" << stats.messages_dropped;
     return oss.str();
 }
 
