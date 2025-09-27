@@ -16,5 +16,7 @@ add_executable(pub_mt src/app/pub_mt.cpp src/bus/publisher.cpp src/bus/subscribe
 add_executable(sub_pool src/app/sub_pool.cpp src/bus/publisher.cpp src/bus/subscriber.cpp src/bus/metrics.cpp)
 
 # Link libraries
-target_link_libraries(pub_mt /opt/homebrew/Cellar/zeromq/4.3.5_1/lib/libzmq.dylib ${Boost_LIBRARIES} pthread)
-target_link_libraries(sub_pool /opt/homebrew/Cellar/zeromq/4.3.5_1/lib/libzmq.dylib ${Boost_LIBRARIES} pthread)
+target_link_directories(pub_mt PRIVATE ${ZMQ_LIBRARY_DIRS})
+target_link_libraries(pub_mt ${ZMQ_LIBRARIES} ${Boost_LIBRARIES} pthread)
+target_link_directories(sub_pool PRIVATE ${ZMQ_LIBRARY_DIRS})
+target_link_libraries(sub_pool ${ZMQ_LIBRARIES} ${Boost_LIBRARIES} pthread)
