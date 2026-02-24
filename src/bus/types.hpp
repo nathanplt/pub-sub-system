@@ -24,8 +24,6 @@ struct BusConfig {
     int io_threads = 1;
     int worker_threads = 4;
     
-    size_t max_queue = 10000;
-    
     std::chrono::milliseconds metrics_period{1000};
     
     int hwm = 1000;

@@ -7,7 +7,7 @@
 #include <atomic>
 #include <memory>
 #include <mutex>
-#include <map>
+#include <unordered_map>
 
 namespace messenger {
 
@@ -28,7 +28,14 @@ public:
     
     void stop();
     
-    void produce(const Message& message);
+    // Disallow new produce() calls from being accepted
+    void close_producers();
+    
+    // Wait until all accepted messages have been forwarded by the I/O thread
+    bool wait_drained(std::chrono::milliseconds timeout = std::chrono::milliseconds::max());
+    
+    // Returns false if producers are closed or the bus is not running
+    bool produce(const Message& message);
     
     bool is_running() const { return running_.load(); }
 
@@ -45,9 +52,18 @@ private:
     
     std::atomic<bool> running_{false};
     std::thread io_thread_;
-    
+
+    // for thread-local sockets (per PublisherBus object)
+    const uint64_t cache_token_;
+    std::atomic<uint64_t> next_socket_owner_id_{1};
     std::mutex socket_mutex_;
-    std::map<std::thread::id, std::unique_ptr<zmq::socket_t>> thread_sockets_;
+    std::unordered_map<uint64_t, std::unique_ptr<zmq::socket_t>> thread_sockets_;
+    
+    // for correct stopping conditions
+    std::atomic<bool> accepting_producers_{false};
+    std::atomic<uint64_t> accepted_messages_{0};
+    std::atomic<uint64_t> forwarded_messages_{0};
+    std::atomic<uint64_t> active_produce_calls_{0};
 };
 
 } // namespace messenger

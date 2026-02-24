@@ -9,7 +9,11 @@
 
 using namespace messenger;
 
-void producer_thread(PublisherBus& bus, int tid, int msg_count, const std::string& topic_prefix) {
+void producer_thread(PublisherBus& bus,
+                     int tid,
+                     int msg_count,
+                     const std::string& topic_prefix,
+                     std::atomic<uint64_t>& rejected_messages) {
     for (int i = 0; i < msg_count; ++i) {
         auto now = std::chrono::steady_clock::now();
         auto ts = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()).count();
@@ -20,7 +24,9 @@ void producer_thread(PublisherBus& bus, int tid, int msg_count, const std::strin
         std::string topic = topic_prefix + std::to_string(tid % 4);
         Message msg(topic, payload);
         
-        bus.produce(msg);
+        if (!bus.produce(msg)) {
+            rejected_messages.fetch_add(1, std::memory_order_relaxed);
+        }
     }
 }
 
@@ -29,6 +35,7 @@ int main(int argc, char* argv[]) {
     int num_producers = 4;
     int messages_per_producer = 10000;
     std::string topic_prefix = "topic";
+    int hwm = 10000;
     
     for (int i = 1; i < argc; i += 2) {
         if (i + 1 >= argc) break;
@@ -46,6 +53,9 @@ int main(int argc, char* argv[]) {
         else if (arg == "--topics" && i + 1 < argc) {
             topic_prefix = argv[i + 1];
         }
+        else if (arg == "--hwm" && i + 1 < argc) {
+            hwm = std::atoi(argv[i + 1]);
+        }
     }
     
     std::cout << "Starting multithreaded publisher:" << std::endl;
@@ -54,23 +64,29 @@ int main(int argc, char* argv[]) {
     std::cout << "  Total messages: " << (num_producers * messages_per_producer) << std::endl;
     std::cout << "  Publisher address: " << pub_addr << std::endl;
     std::cout << "  Topic prefix: " << topic_prefix << std::endl;
+    std::cout << "  HWM: " << hwm << std::endl;
     std::cout << std::endl;
     
     BusConfig config;
     config.pub_bind_addr = pub_addr;
     config.worker_threads = 1; 
-    config.hwm = 10000;
+    config.hwm = hwm;
     
     PublisherBus bus(config);
     bus.start();
-    
-    std::cout << "Publisher started. Starting producer threads..." << std::endl;
 
     std::vector<std::thread> producers;
+    std::atomic<uint64_t> rejected_messages{0};
     auto start_time = std::chrono::steady_clock::now();
     
     for (int i = 0; i < num_producers; ++i) {
-        producers.emplace_back(producer_thread, std::ref(bus), i, messages_per_producer, topic_prefix);
+        producers.emplace_back(
+            producer_thread,
+            std::ref(bus),
+            i,
+            messages_per_producer,
+            topic_prefix,
+            std::ref(rejected_messages));
     }
     
     for (auto& producer : producers) {
@@ -89,9 +105,9 @@ int main(int argc, char* argv[]) {
         std::cout << "Rate: " << (num_producers * messages_per_producer * 1000000.0 / duration_us.count()) 
                   << " messages/sec" << std::endl;
     }
-    
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    
+
+    std::cout << "Rejected produces: " << rejected_messages.load(std::memory_order_relaxed) << std::endl;
+
     bus.stop();
     std::cout << "Publisher stopped" << std::endl;
     

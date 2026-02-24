@@ -51,7 +51,6 @@ void SubscriberBus::stop() {
         io_thread_.join();
     }
     
-    worker_pool_.stop();
     worker_pool_.join();
     
     sub_socket_.reset();

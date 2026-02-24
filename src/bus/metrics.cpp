@@ -31,8 +31,6 @@ void Metrics::record_message_processed() {
     messages_processed_.fetch_add(1);
 }
 
-
-
 Metrics::Stats Metrics::get_stats() {
     Stats stats;
     

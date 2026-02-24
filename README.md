@@ -84,11 +84,13 @@ make -j$(nproc)
 - `--producers <N>`: Number of producer threads (default: 4)
 - `--messages <N>`: Messages per producer (default: 10000)
 - `--topics <prefix>`: Topic prefix (default: `topic`)
+- `--hwm <N>`: ZeroMQ high-water mark for publisher sockets (default: `10000`)
 
 **Subscriber (`sub_pool`):**
 - `--sub <address>`: Subscriber connect address (default: `tcp://127.0.0.1:5556`)
 - `--workers <N>`: Number of worker threads (default: 4)
 - `--topics <list>`: Comma-separated topic list (default: `topic0,topic1,topic2,topic3`)
+- `--hwm <N>`: ZeroMQ high-water mark for subscriber socket (default: `10000`)
 
 ### Advanced Configuration
 
@@ -109,5 +111,5 @@ SubscriberBus subscriber(config, {"topic1", "topic2"}, message_handler);
 The system provides comprehensive metrics:
 
 ```
-METRICS: p50=100ms p90=217ms p99=244ms msgs/sec=0.00 processed=41812 dropped=0
+METRICS: p50=100ms p90=217ms p99=244ms msgs/sec=0.00 processed=41812
 ```

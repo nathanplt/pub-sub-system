@@ -37,6 +37,7 @@ void metrics_thread(SubscriberBus& bus) {
 int main(int argc, char* argv[]) {
     std::string sub_addr = "tcp://127.0.0.1:5556";
     int num_workers = 4;
+    int hwm = 10000;
     std::vector<std::string> topics = {"topic0", "topic1", "topic2", "topic3"};
     
     for (int i = 1; i < argc; i += 2) {
@@ -49,6 +50,9 @@ int main(int argc, char* argv[]) {
         else if (arg == "--workers" && i + 1 < argc) {
             num_workers = std::atoi(argv[i + 1]);
         } 
+        else if (arg == "--hwm" && i + 1 < argc) {
+            hwm = std::atoi(argv[i + 1]);
+        }
         else if (arg == "--topics" && i + 1 < argc) {
             std::string topics_str = argv[i + 1];
             topics.clear();
@@ -70,6 +74,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Starting subscriber with worker pool:" << std::endl;
     std::cout << "  Subscriber address: " << sub_addr << std::endl;
     std::cout << "  Worker threads: " << num_workers << std::endl;
+    std::cout << "  HWM: " << hwm << std::endl;
     std::cout << "  Topics: ";
     for (const auto& topic : topics) {
         std::cout << topic << " ";
@@ -82,7 +87,7 @@ int main(int argc, char* argv[]) {
     BusConfig config;
     config.sub_connect_addr = sub_addr;
     config.worker_threads = num_workers;
-    config.hwm = 10000;
+    config.hwm = hwm;
     config.metrics_period = std::chrono::milliseconds(1000);
     
     SubscriberBus bus(config, topics, message_handler);
