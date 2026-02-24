@@ -91,6 +91,7 @@ make -j$(nproc)
 - `--workers <N>`: Number of worker threads (default: 4)
 - `--topics <list>`: Comma-separated topic list (default: `topic0,topic1,topic2,topic3`)
 - `--hwm <N>`: ZeroMQ high-water mark for subscriber socket (default: `10000`)
+- `--no-work`: Disable simulated CPU work for latency testing
 
 ### Advanced Configuration
 
@@ -105,6 +106,27 @@ config.metrics_period = std::chrono::milliseconds(1000);
 PublisherBus publisher(config);
 SubscriberBus subscriber(config, {"topic1", "topic2"}, message_handler);
 ```
+
+## Delivery Semantics
+
+As of now, this project is optimized for low latency and uses best-effort PUB/SUB.
+- Messages may drop when HWM is hit on publisher ingress, publisher `PUB` (`sndhwm`), or subscriber `SUB` (`rcvhwm`)
+- Tune `--hwm` on both publisher and subscriber for bursty traffic.
+
+Example burst profile:
+
+```bash
+# terminal 1
+./sub_pool --workers 12 --hwm 500000
+
+# terminal 2
+./pub_mt --producers 8 --messages 50000 --hwm 500000 
+```
+
+I plan to eventually address this with perhaps some of the following:
+- Per-socket HWM controls (`PUSH/PULL`, `PUB`, `SUB`)
+- Better drop/backlog visibility in metrics
+- Optional reliable mode with sequence + ACK/NACK retries
 
 ## Metrics
 

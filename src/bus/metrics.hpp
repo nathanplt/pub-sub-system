@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <deque>
 #include <chrono>
 #include <atomic>
 #include <mutex>
@@ -34,11 +35,15 @@ public:
 
 private:
     double calculate_percentile(const std::vector<double>& sorted_samples, double percentile);
+    void prune_old_samples_locked(std::chrono::steady_clock::time_point now);
     
     std::chrono::milliseconds window_size_;
-    std::chrono::steady_clock::time_point window_start_;
     
-    std::vector<double> latency_samples_;
+    struct LatencySample {
+        std::chrono::steady_clock::time_point timestamp;
+        double latency_ns;
+    };
+    std::deque<LatencySample> latency_samples_;
     std::mutex samples_mutex_;
     
     std::atomic<uint64_t> messages_processed_{0};

@@ -17,7 +17,7 @@ void signal_handler(int signal) {
     }
 }
 
-void message_handler(const Message& msg) {
+void simulate_handler_work() {
     // simulate some CPU work (0.5-1ms)
     int total = 0;
     for (int i = 0; i < 10000; ++i) {
@@ -38,22 +38,40 @@ int main(int argc, char* argv[]) {
     std::string sub_addr = "tcp://127.0.0.1:5556";
     int num_workers = 4;
     int hwm = 10000;
+    bool simulate_work = true;
     std::vector<std::string> topics = {"topic0", "topic1", "topic2", "topic3"};
     
-    for (int i = 1; i < argc; i += 2) {
-        if (i + 1 >= argc) break;
-        
+    for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if (arg == "--sub" && i + 1 < argc) {
+        if (arg == "--sub") {
+            if (i + 1 >= argc) {
+                std::cerr << "Missing value for --sub" << std::endl;
+                return 1;
+            }
             sub_addr = argv[i + 1];
+            ++i;
         } 
-        else if (arg == "--workers" && i + 1 < argc) {
+        else if (arg == "--workers") {
+            if (i + 1 >= argc) {
+                std::cerr << "Missing value for --workers" << std::endl;
+                return 1;
+            }
             num_workers = std::atoi(argv[i + 1]);
+            ++i;
         } 
-        else if (arg == "--hwm" && i + 1 < argc) {
+        else if (arg == "--hwm") {
+            if (i + 1 >= argc) {
+                std::cerr << "Missing value for --hwm" << std::endl;
+                return 1;
+            }
             hwm = std::atoi(argv[i + 1]);
+            ++i;
         }
-        else if (arg == "--topics" && i + 1 < argc) {
+        else if (arg == "--topics") {
+            if (i + 1 >= argc) {
+                std::cerr << "Missing value for --topics" << std::endl;
+                return 1;
+            }
             std::string topics_str = argv[i + 1];
             topics.clear();
             size_t pos = 0;
@@ -68,6 +86,10 @@ int main(int argc, char* argv[]) {
                     pos = next_pos + 1;
                 }
             }
+            ++i;
+        }
+        else if (arg == "--no-work") {
+            simulate_work = false;
         }
     }
     
@@ -75,6 +97,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  Subscriber address: " << sub_addr << std::endl;
     std::cout << "  Worker threads: " << num_workers << std::endl;
     std::cout << "  HWM: " << hwm << std::endl;
+    std::cout << "  Simulate work: " << (simulate_work ? "yes" : "no") << std::endl;
     std::cout << "  Topics: ";
     for (const auto& topic : topics) {
         std::cout << topic << " ";
@@ -90,7 +113,14 @@ int main(int argc, char* argv[]) {
     config.hwm = hwm;
     config.metrics_period = std::chrono::milliseconds(1000);
     
-    SubscriberBus bus(config, topics, message_handler);
+    MessageHandler handler = [simulate_work](const Message& msg) {
+        if (!simulate_work) {
+            return;
+        }
+        simulate_handler_work();
+    };
+
+    SubscriberBus bus(config, topics, handler);
     bus.start();
     
     std::cout << "Subscriber started. Waiting for messages..." << std::endl;

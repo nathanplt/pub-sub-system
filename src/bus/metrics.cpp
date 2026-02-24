@@ -7,24 +7,14 @@ namespace messenger {
 
 Metrics::Metrics(std::chrono::milliseconds window_size)
     : window_size_(window_size)
-    , window_start_(std::chrono::steady_clock::now())
     , last_rate_calc_(std::chrono::steady_clock::now()) {
 }
 
 void Metrics::record_latency(std::chrono::nanoseconds latency) {
-    std::lock_guard<std::mutex> lock(samples_mutex_);
-    latency_samples_.push_back(static_cast<double>(latency.count()));
-    
     auto now = std::chrono::steady_clock::now();
-    auto window_end = window_start_ + window_size_;
-    
-    if (now > window_end) {
-        // prevent indefinite growth of latency samples
-        if (latency_samples_.size() > 1000) {
-            latency_samples_.erase(latency_samples_.begin(), latency_samples_.end() - 1000);
-        }
-        window_start_ = now;
-    }
+    std::lock_guard<std::mutex> lock(samples_mutex_);
+    latency_samples_.push_back({now, static_cast<double>(latency.count())});
+    prune_old_samples_locked(now);
 }
 
 void Metrics::record_message_processed() {
@@ -47,8 +37,13 @@ Metrics::Stats Metrics::get_stats() {
     
     {
         std::lock_guard<std::mutex> lock(samples_mutex_);
+        prune_old_samples_locked(now);
         if (!latency_samples_.empty()) {
-            std::vector<double> sorted_samples = latency_samples_;
+            std::vector<double> sorted_samples;
+            sorted_samples.reserve(latency_samples_.size());
+            for (const auto& sample : latency_samples_) {
+                sorted_samples.push_back(sample.latency_ns);
+            }
             std::sort(sorted_samples.begin(), sorted_samples.end());
             
             stats.p50 = calculate_percentile(sorted_samples, 50.0);
@@ -66,7 +61,6 @@ void Metrics::reset() {
     std::lock_guard<std::mutex> lock(samples_mutex_);
     latency_samples_.clear();
     messages_processed_.store(0);
-    window_start_ = std::chrono::steady_clock::now();
     last_rate_calc_ = std::chrono::steady_clock::now();
     last_message_count_ = 0;
 }
@@ -86,6 +80,13 @@ double Metrics::calculate_percentile(const std::vector<double>& sorted_samples, 
     return sorted_samples[lower] * (1.0 - weight) + sorted_samples[upper] * weight;
 }
 
+void Metrics::prune_old_samples_locked(std::chrono::steady_clock::time_point now) {
+    const auto cutoff = now - window_size_;
+    while (!latency_samples_.empty() && latency_samples_.front().timestamp < cutoff) {
+        latency_samples_.pop_front();
+    }
+}
+
 namespace metrics_utils {
 
 std::string format_stats(const Metrics::Stats& stats) {
@@ -101,14 +102,20 @@ std::string format_stats(const Metrics::Stats& stats) {
 
 std::string format_duration(std::chrono::nanoseconds duration) {
     auto ns = duration.count();
+    std::ostringstream oss;
+    oss << std::fixed << std::setprecision(2);
+
     if (ns < 1000) {
         return std::to_string(ns) + "ns";
     } else if (ns < 1000000) {
-        return std::to_string(ns / 1000) + "μs";
+        oss << (static_cast<double>(ns) / 1000.0) << "us";
+        return oss.str();
     } else if (ns < 1000000000) {
-        return std::to_string(ns / 1000000) + "ms";
+        oss << (static_cast<double>(ns) / 1000000.0) << "ms";
+        return oss.str();
     } else {
-        return std::to_string(ns / 1000000000) + "s";
+        oss << (static_cast<double>(ns) / 1000000000.0) << "s";
+        return oss.str();
     }
 }
 
